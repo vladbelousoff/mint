@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.20)
 project(mint LANGUAGES C)
 
 include(FetchContent)
@@ -32,9 +32,19 @@ set(CMAKE_C_EXTENSIONS OFF)
 FetchContent_Declare(
         rtlib
         GIT_REPOSITORY https://github.com/vladbelousoff/rtlib.git
-        GIT_TAG 021cf137e823c9bd7952092dff52d59ed09660c3
+        GIT_TAG 81f62e47a74ae8a2dd3da0e9845a2c757895fcba
 )
 FetchContent_MakeAvailable(rtlib)
 
-add_executable(mint mint.c)
+# Collect source files
+file(GLOB_RECURSE SOURCE_FILES src/*.c)
+file(GLOB_RECURSE HEADER_FILES include/*.h)
+
+add_executable(mint mint.c ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(mint PRIVATE rtlib::rtlib)
+
+# Specify include directories
+target_include_directories(mint PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
