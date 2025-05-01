@@ -6,7 +6,7 @@ int main(const int argc, char* argv[])
   (void)argv;
 
   rtl_init();
-  rtl_term();
+  rtl_cleanup();
 
   return 0;
 }

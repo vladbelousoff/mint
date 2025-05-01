@@ -32,7 +32,7 @@ set(CMAKE_C_EXTENSIONS OFF)
 FetchContent_Declare(
         rtlib
         GIT_REPOSITORY https://github.com/vladbelousoff/rtlib.git
-        GIT_TAG 81f62e47a74ae8a2dd3da0e9845a2c757895fcba
+        GIT_TAG 40cc1c8815c93c115ed82d456e89cc8ec5a369a2
 )
 FetchContent_MakeAvailable(rtlib)
 
