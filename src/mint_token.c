@@ -22,62 +22,64 @@
 
 #include "mint_token.h"
 
+#include <stddef.h>
+
 static char* mint_token_strings[] = {
-  0,            /* UNKNOWN */
-  
+  NULL, /* UNKNOWN */
+
   /* Symbols */
-  "{",          /* LBRACE */
-  "}",          /* RBRACE */
-  "(",          /* LPAREN */
-  ")",          /* RPAREN */
-  "[",          /* LBRACK */
-  "]",          /* RBRACK */
-  ":",          /* COLON */
-  ";",          /* SEMICOLON */
-  "->",         /* ARROW */
-  
+  "{",  /* LBRACE */
+  "}",  /* RBRACE */
+  "(",  /* LPAREN */
+  ")",  /* RPAREN */
+  "[",  /* LBRACK */
+  "]",  /* RBRACK */
+  ":",  /* COLON */
+  ";",  /* SEMICOLON */
+  "->", /* ARROW */
+
   /* Literals */
-  0,            /* IDENTIFIER */
-  0,            /* NUMBER */
-  0,            /* FLOAT */
-  0,            /* STRING */
-  
+  NULL, /* IDENTIFIER */
+  NULL, /* NUMBER */
+  NULL, /* FLOAT */
+  NULL, /* STRING */
+
   /* Operators */
-  "+",          /* PLUS */
-  "-",          /* MINUS */
-  "*",          /* TIMES */
-  "/",          /* DIVIDE */
-  "+=",         /* PLUS_ASSIGN */
-  "-=",         /* MINUS_ASSIGN */
-  "*=",         /* TIMES_ASSIGN */
-  "/=",         /* DIVIDE_ASSIGN */
-  ">",          /* GREATER */
-  "<",          /* LESS */
-  ">=",         /* GREATER_EQUAL */
-  "<=",         /* LESS_EQUAL */
-  "==",         /* EQUAL */
-  "!=",         /* NOTEQUAL */
-  "=",          /* ASSIGN */
-  
+  "+",  /* PLUS */
+  "-",  /* MINUS */
+  "*",  /* TIMES */
+  "/",  /* DIVIDE */
+  "+=", /* PLUS_ASSIGN */
+  "-=", /* MINUS_ASSIGN */
+  "*=", /* TIMES_ASSIGN */
+  "/=", /* DIVIDE_ASSIGN */
+  ">",  /* GREATER */
+  "<",  /* LESS */
+  ">=", /* GREATER_EQUAL */
+  "<=", /* LESS_EQUAL */
+  "==", /* EQUAL */
+  "!=", /* NOTEQUAL */
+  "=",  /* ASSIGN */
+
   /* Comments */
-  0,            /* COMMENT_SINGLE */
-  0,            /* COMMENT_MULTI */
-  
+  NULL, /* COMMENT_SINGLE */
+  NULL, /* COMMENT_MULTI */
+
   /* Keywords */
-  "struct",     /* STRUCT */
-  "trait",      /* TRAIT */
-  "impl",       /* IMPL */
-  "for",        /* FOR */
-  "fn",         /* FN */
-  "return",     /* RETURN */
-  "self",       /* SELF */
-  "let",        /* LET */
-  "mut",        /* MUT */
-  "if",         /* IF */
-  "else",       /* ELSE */
-  "while",      /* WHILE */
-  "true",       /* TRUE */
-  "false",      /* FALSE */
+  "struct", /* STRUCT */
+  "trait",  /* TRAIT */
+  "impl",   /* IMPL */
+  "for",    /* FOR */
+  "fn",     /* FN */
+  "return", /* RETURN */
+  "self",   /* SELF */
+  "let",    /* LET */
+  "mut",    /* MUT */
+  "if",     /* IF */
+  "else",   /* ELSE */
+  "while",  /* WHILE */
+  "true",   /* TRUE */
+  "false",  /* FALSE */
 };
 
 const char* mint_token_id_string(const enum mint_token_id id)

@@ -24,9 +24,10 @@
 
 #include <rtl_list.h>
 
-enum mint_token_id {
+enum mint_token_id
+{
   MINT_TOKEN_ID_UNKNOWN = 0,
-  
+
   /* Symbols */
   MINT_TOKEN_ID_LBRACE = 1,
   MINT_TOKEN_ID_RBRACE = 2,
@@ -37,13 +38,13 @@ enum mint_token_id {
   MINT_TOKEN_ID_COLON = 7,
   MINT_TOKEN_ID_SEMICOLON = 8,
   MINT_TOKEN_ID_ARROW = 9,
-  
+
   /* Literals */
   MINT_TOKEN_ID_IDENTIFIER = 10,
   MINT_TOKEN_ID_NUMBER = 11,
   MINT_TOKEN_ID_FLOAT = 12,
   MINT_TOKEN_ID_STRING = 13,
-  
+
   /* Operators */
   MINT_TOKEN_ID_PLUS = 14,
   MINT_TOKEN_ID_MINUS = 15,
@@ -60,11 +61,11 @@ enum mint_token_id {
   MINT_TOKEN_ID_EQUAL = 26,
   MINT_TOKEN_ID_NOTEQUAL = 27,
   MINT_TOKEN_ID_ASSIGN = 28,
-  
+
   /* Comments */
   MINT_TOKEN_ID_COMMENT_SINGLE = 29,
   MINT_TOKEN_ID_COMMENT_MULTI = 30,
-  
+
   /* Keywords */
   MINT_TOKEN_ID_STRUCT = 31,
   MINT_TOKEN_ID_TRAIT = 32,
@@ -86,10 +87,10 @@ struct mint_token
 {
   struct rtl_list_entry link;
   enum mint_token_id id;
-  int line;
-  int column;
-  int position;
-  int buffer_size;
+  unsigned int line;
+  unsigned int column;
+  unsigned int position;
+  unsigned int buffer_size;
   char buffer[0];
 };
 

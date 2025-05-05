@@ -26,13 +26,13 @@
 
 struct mint_lexer
 {
-  int position;
-  int line;
-  int column;
+  unsigned int position;
+  unsigned int line;
+  unsigned int column;
   struct rtl_list_entry tokens;
 };
 
-void mint_lexer_init();
-void mint_lexer_cleanup();
+void mint_lexer_init(struct mint_lexer* self);
+void mint_lexer_cleanup(struct mint_lexer* self);
 
-void mint_lexer_tokenize(const char* input);
+void mint_lexer_tokenize(struct mint_lexer* lexer, const char* input);
