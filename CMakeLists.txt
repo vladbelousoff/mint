@@ -32,7 +32,7 @@ set(CMAKE_C_EXTENSIONS OFF)
 FetchContent_Declare(
         rtlib
         GIT_REPOSITORY https://github.com/vladbelousoff/rtlib.git
-        GIT_TAG 40cc1c8815c93c115ed82d456e89cc8ec5a369a2
+        GIT_TAG 6f7e464bc32b9c14bdc7426d0bad1dc81196832f
 )
 FetchContent_MakeAvailable(rtlib)
 
@@ -40,11 +40,37 @@ FetchContent_MakeAvailable(rtlib)
 file(GLOB_RECURSE SOURCE_FILES src/*.c)
 file(GLOB_RECURSE HEADER_FILES include/*.h)
 
-add_executable(mint mint.c ${SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries(mint PRIVATE rtlib::rtlib)
+# Create mint-core library
+add_library(mint-core STATIC ${SOURCE_FILES} ${HEADER_FILES})
+target_link_libraries(mint-core PUBLIC rtlib::rtlib)
+target_compile_definitions(mint-core PUBLIC _CRT_SECURE_NO_WARNINGS)
 
-# Specify include directories
-target_include_directories(mint PUBLIC
+# Specify include directories for mint-core
+target_include_directories(mint-core PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
+
+# Create the main executable
+add_executable(mint mint.c)
+target_link_libraries(mint PRIVATE mint-core)
+
+# Testing executable (only built if this is the main project)
+if (CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    add_executable(all_tests all_tests.c)
+
+    target_link_libraries(all_tests PRIVATE mint-core)
+
+    target_compile_definitions(all_tests PRIVATE
+            MINT_TEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests"
+    )
+
+    # Enable testing
+    enable_testing()
+
+    # Add the test
+    add_test(
+            NAME all_tests
+            COMMAND all_tests
+    )
+endif ()

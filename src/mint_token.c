@@ -61,10 +61,6 @@ static char* mint_token_strings[] = {
   "!=", /* NOTEQUAL */
   "=",  /* ASSIGN */
 
-  /* Comments */
-  NULL, /* COMMENT_SINGLE */
-  NULL, /* COMMENT_MULTI */
-
   /* Keywords */
   "struct", /* STRUCT */
   "trait",  /* TRAIT */
