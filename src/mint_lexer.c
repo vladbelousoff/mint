@@ -96,6 +96,8 @@ static bool mint_lexer_try_scan_comments(struct mint_lexer* lexer, const char* i
             lexer->position = position + 1;
             return true;
           }
+          position++;
+          lexer->column++;
         }
       default:
         return false;
@@ -158,9 +160,33 @@ static bool mint_lexer_try_scan_operator(struct mint_lexer* lexer, const char* i
   }
 }
 
+static void mint_lexer_skip_whitespaces(struct mint_lexer* lexer, const char* input)
+{
+  while (true) {
+    const char c = input[lexer->position];
+    switch (c) {
+      case ' ':
+      case '\r':
+      case '\t':
+        lexer->column++;
+        lexer->position++;
+        break;
+      case '\n':
+        lexer->column = 1;
+        lexer->position++;
+        lexer->line++;
+        break;
+      default:
+        return;
+    }
+  }
+}
+
 void mint_lexer_tokenize(struct mint_lexer* lexer, const char* input)
 {
   while (true) {
+    mint_lexer_skip_whitespaces(lexer, input);
+
     if (mint_lexer_try_scan_comments(lexer, input)) {
       continue;
     }
