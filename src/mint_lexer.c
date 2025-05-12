@@ -182,9 +182,18 @@ static void mint_lexer_skip_whitespaces(struct mint_lexer* lexer, const char* in
   }
 }
 
+static void mint_report_unknown_character(const struct mint_lexer* lexer, const char* input)
+{
+  const char c = input[lexer->position];
+  if (c != 0) {
+    rtl_log_e("Unknown character: '%c'", c);
+    exit(-1);
+  }
+}
+
 void mint_lexer_tokenize(struct mint_lexer* lexer, const char* input)
 {
-  while (true) {
+  while (input[lexer->position]) {
     mint_lexer_skip_whitespaces(lexer, input);
 
     if (mint_lexer_try_scan_comments(lexer, input)) {
@@ -195,8 +204,6 @@ void mint_lexer_tokenize(struct mint_lexer* lexer, const char* input)
       continue;
     }
 
-    if (!input[lexer->position]) {
-      break;
-    }
+    mint_report_unknown_character(lexer, input);
   }
 }
