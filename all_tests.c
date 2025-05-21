@@ -141,6 +141,53 @@ RTL_TEST_FUNCTION(test_003_numbers)
   return 0;
 }
 
+RTL_TEST_FUNCTION(test_004_identifiers)
+{
+  struct mint_lexer lexer;
+  mint_lexer_init(&lexer);
+
+  char file_path[256];
+  snprintf(file_path, sizeof(file_path), "%s/%s", MINT_TEST_DIR, "004_identifiers.mint");
+
+  char* content = read_file_content(file_path);
+  RTL_TEST_NOT_NULL(content);
+
+  mint_lexer_tokenize(&lexer, content);
+
+  // Count tokens by type
+  int total_tokens = 0;
+  int identifier_count = 0;
+  int keyword_count = 0;
+  
+  struct rtl_list_entry* it;
+  rtl_list_for_each(it, &lexer.tokens)
+  {
+    struct mint_token* token = rtl_list_record(it, struct mint_token, link);
+    total_tokens++;
+    
+    if (token->id == MINT_TOKEN_ID_IDENTIFIER) {
+      identifier_count++;
+      
+      // Verify the token has a correct buffer
+      RTL_TEST_NOT_NULL(token->buffer);
+      RTL_TEST_TRUE(token->buffer_size > 0);
+    } 
+    else if (token->id >= MINT_TOKEN_ID_STRUCT && token->id <= MINT_TOKEN_ID_FALSE) {
+      keyword_count++;
+    }
+  }
+
+  rtl_free(content);
+  mint_lexer_cleanup(&lexer);
+
+  // We should have 5 identifiers and 14 keywords
+  RTL_TEST_EQUAL(total_tokens, 19);
+  RTL_TEST_EQUAL(identifier_count, 5);
+  RTL_TEST_EQUAL(keyword_count, 14);
+
+  return 0;
+}
+
 int main(void)
 {
   rtl_init();
@@ -151,12 +198,11 @@ int main(void)
   RTL_RUN_TEST(test_001_empty);
   RTL_RUN_TEST(test_002_comments);
   RTL_RUN_TEST(test_003_numbers);
-
-  // Print summary and return appropriate exit code
-  int exit_code = rtl_test_summary();
+  RTL_RUN_TEST(test_004_identifiers);
 
   // Cleanup after all tests
   rtl_cleanup();
 
-  return exit_code;
+  // Print summary and return appropriate exit code
+  return rtl_test_summary();
 }

@@ -182,12 +182,17 @@ static void mint_lexer_skip_whitespaces(struct mint_lexer* lexer, const char* in
   }
 }
 
+static bool is_digit(char c)
+{
+  return c >= '0' && c <= '9';
+}
+
 static bool mint_lexer_try_scan_number(struct mint_lexer* lexer, const char* input)
 {
   const char first_char = input[lexer->position];
 
   // Check if the current character is a digit
-  if (first_char >= '0' && first_char <= '9') {
+  if (is_digit(first_char)) {
     unsigned int start_position = lexer->position;
     unsigned int current_position = start_position;
     bool is_float = false;
@@ -210,7 +215,7 @@ static bool mint_lexer_try_scan_number(struct mint_lexer* lexer, const char* inp
       // Check for decimal point (only allowed once)
       if (c == '.' && !is_float) {
         // Ensure the next character is a digit
-        if (input[current_position + 1] >= '0' && input[current_position + 1] <= '9') {
+        if (is_digit(input[current_position + 1])) {
           is_float = true;
           current_position++;
           continue;
@@ -229,6 +234,78 @@ static bool mint_lexer_try_scan_number(struct mint_lexer* lexer, const char* inp
 
     // Add the number token
     mint_add_token(lexer, MINT_TOKEN_ID_NUMBER, buffer, length);
+
+    // Update the lexer position and column
+    lexer->column += length;
+    lexer->position = current_position;
+
+    return true;
+  }
+
+  return false;
+}
+
+static bool is_letter(char c)
+{
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+static bool is_identifier_char(char c)
+{
+  return is_letter(c) || is_digit(c) || c == '_';
+}
+
+static bool mint_lexer_try_scan_identifier(struct mint_lexer* lexer, const char* input)
+{
+  if (is_letter(input[lexer->position]) || input[lexer->position] == '_') {
+    unsigned int start_position = lexer->position;
+    unsigned int current_position = start_position;
+
+    // Scan the identifier
+    while (is_identifier_char(input[current_position])) {
+      current_position++;
+    }
+
+    // Calculate the length of the identifier
+    unsigned int length = current_position - start_position;
+
+    // Check if it's a keyword
+    const char* buffer = &input[start_position];
+    enum mint_token_id token_id = MINT_TOKEN_ID_IDENTIFIER;
+
+    // Compare with keywords
+    if (length == 6 && strncmp(buffer, "struct", 6) == 0) {
+      token_id = MINT_TOKEN_ID_STRUCT;
+    } else if (length == 5 && strncmp(buffer, "trait", 5) == 0) {
+      token_id = MINT_TOKEN_ID_TRAIT;
+    } else if (length == 4 && strncmp(buffer, "impl", 4) == 0) {
+      token_id = MINT_TOKEN_ID_IMPL;
+    } else if (length == 3 && strncmp(buffer, "for", 3) == 0) {
+      token_id = MINT_TOKEN_ID_FOR;
+    } else if (length == 2 && strncmp(buffer, "fn", 2) == 0) {
+      token_id = MINT_TOKEN_ID_FN;
+    } else if (length == 6 && strncmp(buffer, "return", 6) == 0) {
+      token_id = MINT_TOKEN_ID_RETURN;
+    } else if (length == 4 && strncmp(buffer, "self", 4) == 0) {
+      token_id = MINT_TOKEN_ID_SELF;
+    } else if (length == 3 && strncmp(buffer, "let", 3) == 0) {
+      token_id = MINT_TOKEN_ID_LET;
+    } else if (length == 3 && strncmp(buffer, "mut", 3) == 0) {
+      token_id = MINT_TOKEN_ID_MUT;
+    } else if (length == 2 && strncmp(buffer, "if", 2) == 0) {
+      token_id = MINT_TOKEN_ID_IF;
+    } else if (length == 4 && strncmp(buffer, "else", 4) == 0) {
+      token_id = MINT_TOKEN_ID_ELSE;
+    } else if (length == 5 && strncmp(buffer, "while", 5) == 0) {
+      token_id = MINT_TOKEN_ID_WHILE;
+    } else if (length == 4 && strncmp(buffer, "true", 4) == 0) {
+      token_id = MINT_TOKEN_ID_TRUE;
+    } else if (length == 5 && strncmp(buffer, "false", 5) == 0) {
+      token_id = MINT_TOKEN_ID_FALSE;
+    }
+
+    // Add the token
+    mint_add_token(lexer, token_id, buffer, length);
 
     // Update the lexer position and column
     lexer->column += length;
@@ -264,6 +341,10 @@ void mint_lexer_tokenize(struct mint_lexer* lexer, const char* input)
     }
 
     if (mint_lexer_try_scan_number(lexer, input)) {
+      continue;
+    }
+
+    if (mint_lexer_try_scan_identifier(lexer, input)) {
       continue;
     }
 
