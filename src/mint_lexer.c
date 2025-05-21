@@ -182,11 +182,70 @@ static void mint_lexer_skip_whitespaces(struct mint_lexer* lexer, const char* in
   }
 }
 
+static bool mint_lexer_try_scan_number(struct mint_lexer* lexer, const char* input)
+{
+  const char first_char = input[lexer->position];
+
+  // Check if the current character is a digit
+  if (first_char >= '0' && first_char <= '9') {
+    unsigned int start_position = lexer->position;
+    unsigned int current_position = start_position;
+    bool is_float = false;
+
+    // Scan the number
+    while (true) {
+      char c = input[current_position];
+
+      // Break if end of stream
+      if (c == 0) {
+        break;
+      }
+
+      // Check for digits
+      if (c >= '0' && c <= '9') {
+        current_position++;
+        continue;
+      }
+
+      // Check for decimal point (only allowed once)
+      if (c == '.' && !is_float) {
+        // Ensure the next character is a digit
+        if (input[current_position + 1] >= '0' && input[current_position + 1] <= '9') {
+          is_float = true;
+          current_position++;
+          continue;
+        }
+      }
+
+      // If we reach here, we've hit the end of the number
+      break;
+    }
+
+    // Calculate the length of the number
+    unsigned int length = current_position - start_position;
+
+    // Create a buffer for the number string
+    const char* buffer = &input[start_position];
+
+    // Add the number token
+    mint_add_token(lexer, MINT_TOKEN_ID_NUMBER, buffer, length);
+
+    // Update the lexer position and column
+    lexer->column += length;
+    lexer->position = current_position;
+
+    return true;
+  }
+
+  return false;
+}
+
 static void mint_report_unknown_character(const struct mint_lexer* lexer, const char* input)
 {
   const char c = input[lexer->position];
   if (c != 0) {
-    rtl_log_e("Unknown character: '%c'", c);
+    rtl_log_e("Unknown character: '%c', line: %u, column: %u, position: %u", c, lexer->line,
+      lexer->column, lexer->position);
     exit(-1);
   }
 }
@@ -201,6 +260,10 @@ void mint_lexer_tokenize(struct mint_lexer* lexer, const char* input)
     }
 
     if (mint_lexer_try_scan_operator(lexer, input)) {
+      continue;
+    }
+
+    if (mint_lexer_try_scan_number(lexer, input)) {
       continue;
     }
 

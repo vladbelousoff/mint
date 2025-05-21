@@ -41,7 +41,6 @@ static char* mint_token_strings[] = {
   /* Literals */
   NULL, /* IDENTIFIER */
   NULL, /* NUMBER */
-  NULL, /* FLOAT */
   NULL, /* STRING */
 
   /* Operators */

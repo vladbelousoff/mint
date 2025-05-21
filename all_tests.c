@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "mint_lexer.h"
+#include "mint_token.h"
 
 #include <rtl_list.h>
 #include <rtl_memory.h>
@@ -98,6 +99,48 @@ RTL_TEST_FUNCTION(test_002_comments)
   return 0;
 }
 
+RTL_TEST_FUNCTION(test_003_numbers)
+{
+  struct mint_lexer lexer;
+  mint_lexer_init(&lexer);
+
+  char file_path[256];
+  snprintf(file_path, sizeof(file_path), "%s/%s", MINT_TEST_DIR, "003_numbers.mint");
+
+  char* content = read_file_content(file_path);
+  RTL_TEST_NOT_NULL(content);
+
+  mint_lexer_tokenize(&lexer, content);
+
+  // Verify we have the correct number of tokens
+  int token_count = 0;
+  int number_token_count = 0;
+
+  struct rtl_list_entry* it;
+  rtl_list_for_each(it, &lexer.tokens)
+  {
+    struct mint_token* token = rtl_list_record(it, struct mint_token, link);
+    token_count++;
+
+    if (token->id == MINT_TOKEN_ID_NUMBER) {
+      number_token_count++;
+
+      // Verify the token has the correct buffer content
+      RTL_TEST_NOT_NULL(token->buffer);
+      RTL_TEST_TRUE(token->buffer_size > 0);
+    }
+  }
+
+  rtl_free(content);
+  mint_lexer_cleanup(&lexer);
+
+  // We should have 8 number tokens: 4 integers and 4 floats
+  RTL_TEST_EQUAL(token_count, 8);
+  RTL_TEST_EQUAL(number_token_count, 8);
+
+  return 0;
+}
+
 int main(void)
 {
   rtl_init();
@@ -107,10 +150,13 @@ int main(void)
   // Run tests
   RTL_RUN_TEST(test_001_empty);
   RTL_RUN_TEST(test_002_comments);
+  RTL_RUN_TEST(test_003_numbers);
+
+  // Print summary and return appropriate exit code
+  int exit_code = rtl_test_summary();
 
   // Cleanup after all tests
   rtl_cleanup();
 
-  // Print summary and return appropriate exit code
-  return rtl_test_summary();
+  return exit_code;
 }
