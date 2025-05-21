@@ -36,6 +36,8 @@ static char* mint_token_strings[] = {
   "]",  /* RBRACK */
   ":",  /* COLON */
   ";",  /* SEMICOLON */
+  ".",  /* DOT */
+  ",",  /* COMMA */
   "->", /* ARROW */
 
   /* Literals */

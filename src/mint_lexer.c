@@ -32,6 +32,11 @@ void mint_lexer_cleanup(struct mint_lexer* self)
   self->column = 0;
 }
 
+static bool is_digit(char c)
+{
+  return c >= '0' && c <= '9';
+}
+
 static void mint_add_token(
   struct mint_lexer* lexer, enum mint_token_id id, const char* buffer, unsigned int buffer_size)
 {
@@ -107,57 +112,217 @@ static bool mint_lexer_try_scan_comments(struct mint_lexer* lexer, const char* i
   return false;
 }
 
+static bool mint_lexer_try_scan_symbol(struct mint_lexer* lexer, const char* input)
+{
+  switch (input[lexer->position]) {
+    case '{':
+      mint_add_token(lexer, MINT_TOKEN_ID_LBRACE, NULL, 0);
+      lexer->position += 1;
+      lexer->column += 1;
+      return true;
+    case '}':
+      mint_add_token(lexer, MINT_TOKEN_ID_RBRACE, NULL, 0);
+      lexer->position += 1;
+      lexer->column += 1;
+      return true;
+    case '(':
+      mint_add_token(lexer, MINT_TOKEN_ID_LPAREN, NULL, 0);
+      lexer->position += 1;
+      lexer->column += 1;
+      return true;
+    case ')':
+      mint_add_token(lexer, MINT_TOKEN_ID_RPAREN, NULL, 0);
+      lexer->position += 1;
+      lexer->column += 1;
+      return true;
+    case '[':
+      mint_add_token(lexer, MINT_TOKEN_ID_LBRACK, NULL, 0);
+      lexer->position += 1;
+      lexer->column += 1;
+      return true;
+    case ']':
+      mint_add_token(lexer, MINT_TOKEN_ID_RBRACK, NULL, 0);
+      lexer->position += 1;
+      lexer->column += 1;
+      return true;
+    case ':':
+      mint_add_token(lexer, MINT_TOKEN_ID_COLON, NULL, 0);
+      lexer->position += 1;
+      lexer->column += 1;
+      return true;
+    case ';':
+      mint_add_token(lexer, MINT_TOKEN_ID_SEMICOLON, NULL, 0);
+      lexer->position += 1;
+      lexer->column += 1;
+      return true;
+    case '.':
+      // We need to check if this is not the start of a number like .123
+      if (!is_digit(input[lexer->position + 1])) {
+        mint_add_token(lexer, MINT_TOKEN_ID_DOT, NULL, 0);
+        lexer->position += 1;
+        lexer->column += 1;
+        return true;
+      }
+      return false;
+    case ',':
+      mint_add_token(lexer, MINT_TOKEN_ID_COMMA, NULL, 0);
+      lexer->position += 1;
+      lexer->column += 1;
+      return true;
+    default:
+      return false;
+  }
+}
+
+static bool mint_lexer_try_scan_string(struct mint_lexer* lexer, const char* input)
+{
+  if (input[lexer->position] == '"') {
+    unsigned int start_position = lexer->position + 1;  // Skip the opening quote
+    unsigned int current_position = start_position;
+
+    // Scan until closing quote or end of file
+    while (input[current_position] != '"' && input[current_position] != 0) {
+      // Handle escape sequences
+      if (input[current_position] == '\\' && input[current_position + 1] != 0) {
+        current_position += 2;  // Skip the escape character and the escaped character
+      } else {
+        current_position++;
+      }
+    }
+
+    // Check if we ended with a proper closing quote
+    if (input[current_position] == 0) {
+      // Unterminated string
+      rtl_log_e("Unterminated string literal");
+      exit(-1);
+    }
+
+    // Calculate the length of the string (excluding quotes)
+    unsigned int length = current_position - start_position;
+
+    // Add the string token
+    mint_add_token(lexer, MINT_TOKEN_ID_STRING, &input[start_position], length);
+
+    // Update the lexer position and column (including both quotes)
+    lexer->column += length + 2;
+    lexer->position = current_position + 1;  // +1 to skip the closing quote
+
+    return true;
+  }
+
+  return false;
+}
+
+static bool mint_lexer_try_scan_arrow(struct mint_lexer* lexer, const char* input)
+{
+  if (input[lexer->position] == '-' && input[lexer->position + 1] == '>') {
+    mint_add_token(lexer, MINT_TOKEN_ID_ARROW, NULL, 0);
+    lexer->position += 2;
+    lexer->column += 2;
+    return true;
+  }
+
+  return false;
+}
+
 static bool mint_lexer_try_scan_operator(struct mint_lexer* lexer, const char* input)
 {
+  // Try to scan for arrow operator first
+  if (mint_lexer_try_scan_arrow(lexer, input)) {
+    return true;
+  }
+
   switch (input[lexer->position]) {
     case '+':
       if (input[lexer->position + 1] == '=') {
         mint_add_token(lexer, MINT_TOKEN_ID_PLUS_ASSIGN, NULL, 0);
         lexer->position += 2;
+        lexer->column += 2;
       } else {
         mint_add_token(lexer, MINT_TOKEN_ID_PLUS, NULL, 0);
         lexer->position += 1;
+        lexer->column += 1;
       }
       return true;
     case '-':
       if (input[lexer->position + 1] == '=') {
         mint_add_token(lexer, MINT_TOKEN_ID_MINUS_ASSIGN, NULL, 0);
         lexer->position += 2;
+        lexer->column += 2;
       } else {
         mint_add_token(lexer, MINT_TOKEN_ID_MINUS, NULL, 0);
         lexer->position += 1;
+        lexer->column += 1;
       }
       return true;
     case '*':
       if (input[lexer->position + 1] == '=') {
         mint_add_token(lexer, MINT_TOKEN_ID_TIMES_ASSIGN, NULL, 0);
         lexer->position += 2;
+        lexer->column += 2;
       } else {
         mint_add_token(lexer, MINT_TOKEN_ID_TIMES, NULL, 0);
         lexer->position += 1;
+        lexer->column += 1;
       }
       return true;
     case '/':
       if (input[lexer->position + 1] == '=') {
         mint_add_token(lexer, MINT_TOKEN_ID_DIVIDE_ASSIGN, NULL, 0);
         lexer->position += 2;
+        lexer->column += 2;
       } else {
         mint_add_token(lexer, MINT_TOKEN_ID_DIVIDE, NULL, 0);
         lexer->position += 1;
+        lexer->column += 1;
       }
       return true;
     case '=':
       if (input[lexer->position + 1] == '=') {
         mint_add_token(lexer, MINT_TOKEN_ID_EQUAL, NULL, 0);
         lexer->position += 2;
+        lexer->column += 2;
       } else {
         mint_add_token(lexer, MINT_TOKEN_ID_ASSIGN, NULL, 0);
         lexer->position += 1;
+        lexer->column += 1;
       }
       return true;
+    case '>':
+      if (input[lexer->position + 1] == '=') {
+        mint_add_token(lexer, MINT_TOKEN_ID_GREATER_EQUAL, NULL, 0);
+        lexer->position += 2;
+        lexer->column += 2;
+      } else {
+        mint_add_token(lexer, MINT_TOKEN_ID_GREATER, NULL, 0);
+        lexer->position += 1;
+        lexer->column += 1;
+      }
+      return true;
+    case '<':
+      if (input[lexer->position + 1] == '=') {
+        mint_add_token(lexer, MINT_TOKEN_ID_LESS_EQUAL, NULL, 0);
+        lexer->position += 2;
+        lexer->column += 2;
+      } else {
+        mint_add_token(lexer, MINT_TOKEN_ID_LESS, NULL, 0);
+        lexer->position += 1;
+        lexer->column += 1;
+      }
+      return true;
+    case '!':
+      if (input[lexer->position + 1] == '=') {
+        mint_add_token(lexer, MINT_TOKEN_ID_NOTEQUAL, NULL, 0);
+        lexer->position += 2;
+        lexer->column += 2;
+        return true;
+      }
+      break;
     default:
-      return false;
+      break;
   }
+
+  return false;
 }
 
 static void mint_lexer_skip_whitespaces(struct mint_lexer* lexer, const char* input)
@@ -182,17 +347,12 @@ static void mint_lexer_skip_whitespaces(struct mint_lexer* lexer, const char* in
   }
 }
 
-static bool is_digit(char c)
-{
-  return c >= '0' && c <= '9';
-}
-
 static bool mint_lexer_try_scan_number(struct mint_lexer* lexer, const char* input)
 {
   const char first_char = input[lexer->position];
 
-  // Check if the current character is a digit
-  if (is_digit(first_char)) {
+  // Check if the current character is a digit or a decimal point followed by a digit
+  if (is_digit(first_char) || (first_char == '.' && is_digit(input[lexer->position + 1]))) {
     unsigned int start_position = lexer->position;
     unsigned int current_position = start_position;
     bool is_float = false;
@@ -201,13 +361,13 @@ static bool mint_lexer_try_scan_number(struct mint_lexer* lexer, const char* inp
     while (true) {
       char c = input[current_position];
 
-      // Break if end of stream
+      // Break if eos is reached
       if (c == 0) {
         break;
       }
 
       // Check for digits
-      if (c >= '0' && c <= '9') {
+      if (is_digit(c)) {
         current_position++;
         continue;
       }
@@ -336,11 +496,19 @@ void mint_lexer_tokenize(struct mint_lexer* lexer, const char* input)
       continue;
     }
 
+    if (mint_lexer_try_scan_symbol(lexer, input)) {
+      continue;
+    }
+
     if (mint_lexer_try_scan_operator(lexer, input)) {
       continue;
     }
 
     if (mint_lexer_try_scan_number(lexer, input)) {
+      continue;
+    }
+
+    if (mint_lexer_try_scan_string(lexer, input)) {
       continue;
     }
 
